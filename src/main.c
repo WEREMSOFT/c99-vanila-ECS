@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <raylib.h>
+#include "game_object_acyclic_graph.h"
 
 #ifdef OS_WEB
 #include <emscripten/emscripten.h>
@@ -9,10 +10,23 @@
 #define HEIGHT 600
 
 Camera3D camera = {0};
-Vector3 cube_position = {0.0f, 0.0f, 0.0f};
+GameObjectDAG* world;
+
+inline void gameObjectDAGUpdateWorldPosition(GameObjectDAG* dag) {
+    for (int i = 0; i < dag->header.length; i++){
+        GameObject* go = &world->gameObjects[i];
+        if(go->parent == -1){
+            go->worldPosition = go->position;
+        } else {
+            go->worldPosition = Vector3Add(go->position, dag->gameObjects[go->parent].worldPosition);
+        }
+    }
+}
 
 void update_frame()
 {
+    gameObjectDAGUpdateWorldPosition(world);
+
     BeginDrawing();
     {
 
@@ -21,41 +35,45 @@ void update_frame()
 
         BeginMode3D(camera);
         {
-            DrawCube(cube_position, 1, 1, 1, RED);
-            DrawCubeWires(cube_position, 1, 1, 1, BLUE);
+            for(int i = 0; i < world->header.length; i++){
+                GameObject* go = &world->gameObjects[i];
+                go->draw(go);
+            }
             DrawGrid(10, 1);
         }
         EndMode3D();
 
-        if (IsKeyDown(KEY_KP_ADD))
-            camera.fovy += 1.0f;
-        if (IsKeyDown(KEY_KP_SUBTRACT))
-            camera.fovy -= 1.0f;
+        for(int i = 0; i < world->header.length; i++) {
+            world->gameObjects[i].update(&world->gameObjects[i]);
+        }
 
-        if (IsKeyPressed(KEY_LEFT))
-            cube_position.x -= 1.0f;
-        if (IsKeyPressed(KEY_RIGHT))
-            cube_position.x += 1.0f;
-        if (IsKeyPressed(KEY_UP))
-            cube_position.z -= 1.0f;
-        if (IsKeyPressed(KEY_DOWN))
-            cube_position.z += 1.0f;
+        
     }
     EndDrawing();
+
+    if (IsKeyDown(KEY_KP_ADD))
+        camera.fovy += 1.0f;
+    if (IsKeyDown(KEY_KP_SUBTRACT))
+        camera.fovy -= 1.0f;
 }
 
 int main(void)
 {
-#ifdef OS_Windows_NT
-    printf("Windows dettected\n");
-#elif defined OS_Linux
-    printf("LINUS dettected\n");
-#elif defined OS_Darwin
-    printf("MacOS dettected\n");
-#endif
 
-    InitWindow(WIDTH, HEIGHT, "This is a network test");
+    InitWindow(WIDTH, HEIGHT, "this is a DAG test");
     SetTargetFPS(60);
+
+    world = GameObjectDAGInit(10);
+
+    GameObjectDAGInsertGameObject(world, gameObjectCreate());
+    GameObjectDAGInsertGameObject(world, gameObjectCreate());
+
+    world->gameObjects[0].update = gameObjectUpdateKeyboard;
+
+    world->gameObjects[1].position.x = 1.f;
+    world->gameObjects[1].position.z = 1.f;
+    
+    GameObjectDAGAddChild(world, 0, 1);
 
     camera.fovy = 45.0f;
     camera.target = (Vector3){.0f, .0f, .0f};
@@ -72,6 +90,6 @@ int main(void)
     }
 #endif
     CloseWindow();
-
+    GameObjectDAGFini(world);
     return 0;
 }
