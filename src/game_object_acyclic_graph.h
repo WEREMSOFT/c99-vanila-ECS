@@ -6,8 +6,15 @@
 #include "util/array_header.h"
 #include <raylib.h>
 #include <raymath.h>
+#include <limits.h>
 
 struct GameObject;
+
+typedef enum Tag {
+    PARENT,
+    CHILD,
+    CHILD_BLUE
+} Tag;
 
 typedef enum Primitive {
     CUBE,
@@ -15,11 +22,12 @@ typedef enum Primitive {
 } Primitive;
 
 typedef struct GameObject {
+    int id;
+    Tag tag;
     int parent;
-    void(*update)(struct GameObject*);
-    void(*draw)(struct GameObject*);
     Vector3 worldPosition;
     Vector3 position;
+    Color color;
     Primitive type;
 } GameObject;
 
@@ -28,7 +36,7 @@ typedef struct GameObjectDAG {
     GameObject gameObjects[1];
 } GameObjectDAG;
 
-void gameObjectUpdateKeyboard(GameObject* self){
+inline void gameObjectUpdateKeyboard(GameObject* self){
     if (IsKeyPressed(KEY_LEFT))
         self->position.x -= 1.0f;
     if (IsKeyPressed(KEY_RIGHT))
@@ -39,20 +47,19 @@ void gameObjectUpdateKeyboard(GameObject* self){
         self->position.z += 1.0f;
 }
 
-void gameObjectUpdate(GameObject* self){
+inline void gameObjectUpdate(GameObject* self){
 }
 
-void gameObjectDraw(GameObject* self){
-    DrawCube(self->worldPosition, 1, 1, 1, RED);
+inline void gameObjectDraw(GameObject* self){
+    DrawCube(self->worldPosition, 1, 1, 1, self->color);
     DrawCubeWires(self->worldPosition, 1, 1, 1, BLUE);
 }
 
-
 GameObject gameObjectCreate(){
+    
     GameObject self = {0};
     self.parent = -1;
-    self.update = gameObjectUpdate;
-    self.draw = gameObjectDraw;
+    self.color = RED;
     return self;
 }
 
@@ -68,6 +75,10 @@ GameObjectDAG* GameObjectDAGInit(int initialCapacity){
 
     memset(dag, 0, size);
 
+    for(int i = 0; i < initialCapacity; i++){
+        dag->gameObjects[i].id = INT_MAX;
+    }
+
     dag->header.capacity = initialCapacity;
     dag->header.elementSize = sizeof(GameObject);
     dag->header.length = 0;
@@ -82,9 +93,14 @@ void GameObjectDAGInsertGameObject(GameObjectDAG* self, GameObject element){
             exit(-1);
         } else {
             self->header.capacity *= 2;
+
+            for(int i = self->header.capacity / 2; i < self->header.capacity; i++) {
+                self->gameObjects[i].id = INT_MAX;
+            }
         }
     }
     if(self->header.length == 0) element.parent = -1;
+    element.id = self->header.length;
     self->gameObjects[self->header.length++] = element;
 }
 
