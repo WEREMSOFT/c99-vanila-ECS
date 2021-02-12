@@ -1,43 +1,36 @@
-# Notes
+== With function pointers
+==101918== 
+==101918== I   refs:      968,347,621
+==101918== I1  misses:      6,532,547
+==101918== LLi misses:         48,100
+==101918== I1  miss rate:        0.67%
+==101918== LLi miss rate:        0.00%
+==101918== 
+==101918== D   refs:      411,230,505  (319,638,551 rd   + 91,591,954 wr)
+==101918== D1  misses:     18,640,077  ( 16,996,099 rd   +  1,643,978 wr)
+==101918== LLd misses:        504,672  (    217,217 rd   +    287,455 wr)
+==101918== D1  miss rate:         4.5% (        5.3%     +        1.8%  )
+==101918== LLd miss rate:         0.1% (        0.1%     +        0.3%  )
+==101918== 
+==101918== LL refs:        25,172,624  ( 23,528,646 rd   +  1,643,978 wr)
+==101918== LL misses:         552,772  (    265,317 rd   +    287,455 wr)
+==101918== LL miss rate:          0.0% (        0.0%     +        0.3%  )
 
-I usually work having a split screen with a source file and a notes file where I copy and paste snippets and todos.
+Full DOD
 
-## Make commands
-
-make test_[filename_without_extension]: Run the test for the specified file. **(1)**
-make run_[filename]
-
-**(1)**: executable files deleted after run: make will delete all intermediate files after run. This is the default behavior of make.
-
-## TODO
-
-* Make tests run on mac and windows.
-
-## Dettect OS
-This dettects the operative system I'm running on. Check makefile for more details.
-
-```
-    #ifdef OS_Windows_NT
-    printf("Windows dettected\n");
-    #elif defined OS_Linux
-    printf("LINUS dettected\n");
-    #elif defined OS_Darwin
-    printf("MacOS dettected\n");
-    #endif
-```
-
-# Programming Wisdom
-
-The ultimate goal on writing code is to reduce the cognitive load that an average person needs to understand it. Split code on multiple files does not always contribute to this.
-
-Cognitive load is usually reduced by:
-
-* Descriptive names
-* Low cyclomatic complexity
-* Small tool footprint
-
-You can measure cyclomatic complexity with tools like **cccc** but you probably don't want to go that far.
-
-I usually work having a split screen with a source file and a notes file where I copy and paste snippets and todos.
-
-Dont fear to create big files, I split the **Makefile** in several subfiles and include them but I was finding myself going back and forth to change libraries and compiler options. Split in multiple files don't always make your code more manejable.
+==102496== 
+==102496== I   refs:      972,268,078
+==102496== I1  misses:      6,578,103
+==102496== LLi misses:         48,123
+==102496== I1  miss rate:        0.68%
+==102496== LLi miss rate:        0.00%
+==102496== 
+==102496== D   refs:      412,915,312  (320,757,779 rd   + 92,157,533 wr)
+==102496== D1  misses:     18,628,634  ( 16,979,735 rd   +  1,648,899 wr)
+==102496== LLd misses:        505,046  (    217,571 rd   +    287,475 wr)
+==102496== D1  miss rate:         4.5% (        5.3%     +        1.8%  )
+==102496== LLd miss rate:         0.1% (        0.1%     +        0.3%  )
+==102496== 
+==102496== LL refs:        25,206,737  ( 23,557,838 rd   +  1,648,899 wr)
+==102496== LL misses:         553,169  (    265,694 rd   +    287,475 wr)
+==102496== LL miss rate:          0.0% (        0.0%     +        0.3%  )

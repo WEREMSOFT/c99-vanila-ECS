@@ -21,14 +21,19 @@ int selectParent(GameObject* a, GameObject* b){
 
 int selectChilds(GameObject* a, GameObject* b){
     if(b->tag == a->tag) return 0;
-    return b->tag == CHILD ? 1 : 0;
+    return b->tag == CHILD || b->tag == CHILD_CIRCLE ? 1 : 0;
+}
+
+int selectChildCircle(GameObject* a, GameObject* b) {
+    if(b->tag == a->tag) return 0;
+    return b->tag == CHILD_CIRCLE ? 1 : 0;
 }
 
 int resetOrder(GameObject* a, GameObject* b) {
     return a->id - b->id;
 }
 
-inline void gameObjectDAGUpdateWorldPosition(GameObjectDAG* dag) {
+void gameObjectDAGUpdateWorldPosition(GameObjectDAG* dag) {
     for (int i = 0; i < dag->header.length; i++){
         GameObject* go = &world->gameObjects[i];
         if(go->parent == -1){
@@ -39,8 +44,14 @@ inline void gameObjectDAGUpdateWorldPosition(GameObjectDAG* dag) {
     }
 }
 
-inline void update_frame()
+void update_frame()
 {
+    qsort(world->gameObjects, world->header.length, sizeof(GameObject), selectChildCircle);
+    for(int i = 0; i < world->header.length && world->gameObjects[i].tag == CHILD_CIRCLE; i++) {
+        gameObjectUpdateCircular(&world->gameObjects[i]);
+    }
+
+    qsort(world->gameObjects, world->header.length, sizeof(GameObject), resetOrder);
     gameObjectDAGUpdateWorldPosition(world);
 
     BeginDrawing();
@@ -72,8 +83,6 @@ inline void update_frame()
         gameObjectUpdate(&world->gameObjects[i]);
     }
 
-    qsort(world->gameObjects, world->header.length, sizeof(GameObject), resetOrder);
-
     if (IsKeyDown(KEY_KP_ADD))
         camera.fovy += 1.0f;
     if (IsKeyDown(KEY_KP_SUBTRACT))
@@ -98,7 +107,7 @@ int main(void)
     GameObjectDAGAddChild(world, 0, 1);
 
     GameObjectDAGInsertGameObject(world, gameObjectCreate());
-    world->gameObjects[2].tag = CHILD;
+    world->gameObjects[2].tag = CHILD_CIRCLE;
     world->gameObjects[2].position.x = 2.f;
     world->gameObjects[2].position.z = 2.f;
     world->gameObjects[2].color = BLUE;
@@ -122,7 +131,7 @@ int main(void)
 #ifdef OS_WEB
     emscripten_set_main_loop(update_frame, 0, 1);
 #else
-    int count = 100;
+    int count = 1000;
     while (!WindowShouldClose() && count--)
     {
         update_frame();

@@ -13,7 +13,7 @@ struct GameObject;
 typedef enum Tag {
     PARENT,
     CHILD,
-    CHILD_BLUE
+    CHILD_CIRCLE,
 } Tag;
 
 typedef enum Primitive {
@@ -31,12 +31,19 @@ typedef struct GameObject {
     Primitive type;
 } GameObject;
 
+
+
 typedef struct GameObjectDAG {
     ArrayHeader header;
     GameObject gameObjects[1];
 } GameObjectDAG;
 
-inline void gameObjectUpdateKeyboard(GameObject* self){
+// void gameObjectUpdateKeyboard(GameObject* self);
+// void gameObjectUpdateCircular(GameObject* self);
+// void gameObjectDraw(GameObject* self);
+// void gameObjectUpdate(GameObject* self);
+
+void gameObjectUpdateKeyboard(GameObject* self){
     if (IsKeyPressed(KEY_LEFT))
         self->position.x -= 1.0f;
     if (IsKeyPressed(KEY_RIGHT))
@@ -47,10 +54,15 @@ inline void gameObjectUpdateKeyboard(GameObject* self){
         self->position.z += 1.0f;
 }
 
-inline void gameObjectUpdate(GameObject* self){
+void gameObjectUpdateCircular(GameObject* self){
+    self->position.x = sinf(GetTime() * 2.f) + 2.f;
+    self->position.z = cosf(GetTime() * 2.f) + 2.f;
 }
 
-inline void gameObjectDraw(GameObject* self){
+void gameObjectUpdate(GameObject* self){
+}
+
+void gameObjectDraw(GameObject* self){
     DrawCube(self->worldPosition, 1, 1, 1, self->color);
     DrawCubeWires(self->worldPosition, 1, 1, 1, BLUE);
 }
