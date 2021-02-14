@@ -59,7 +59,6 @@ void gameObjectUpdate(GameObject* self){
 
 void gameObjectDraw(GameObject* self){
     DrawCube(self->worldPosition, 1, 1, 1, self->color);
-    DrawCubeWires(self->worldPosition, 1, 1, 1, BLUE);
 }
 
 GameObject gameObjectCreate(){

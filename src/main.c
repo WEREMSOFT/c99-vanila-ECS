@@ -13,26 +13,20 @@
 Camera3D camera = {0};
 GameObjectDAG* world;
 
+static inline void binarySort(GameObjectDAG* world, Tag tag) {
+    int currentPlace = 0;
+    for(int i = 0; i < world->header.length; i++) {
+        if(world->gameObjects[i].tag == tag) {
+            GameObject pivot = world->gameObjects[currentPlace];
+            world->gameObjects[currentPlace] = world->gameObjects[i];
+            world->gameObjects[i] = pivot;
+            currentPlace++;
+        }
+    }
+}
+
 static void gameObjectDAGUpdateWorldPosition(GameObjectDAG* dag);
 static void update_frame();
-
-static inline int selectParent(GameObject* a, GameObject* b){
-    if(a->tag == b->tag) return 0;
-    if(b->tag == PARENT) return 1; 
-    return -1;
-}
-
-static inline int selectChilds(GameObject* a, GameObject* b){
-    if(a->tag == b->tag) return 0;
-    if(b->tag == CHILD) return 1;
-    return -1;
-}
-
-static inline int selectChildCircle(GameObject* a, GameObject* b) {
-    if(a->tag == b->tag) return 0;
-    if(a->tag == CHILD_CIRCLE) return -1;
-    return 1; 
-}
 
 static inline int resetOrder(GameObject* a, GameObject* b) {
     return a->id - b->id;
@@ -58,17 +52,18 @@ inline void update_frame()
      * the object tag is the one we want to work with. The last phase is restore the 
      * array to it's original order(by id)
      */
-    qsort(world->gameObjects, world->header.length, sizeof(GameObject), selectParent);
+    
+    binarySort(world, PARENT);
     for(int i = 0; i < world->header.length && world->gameObjects[i].tag == PARENT; i++) {
         gameObjectUpdateKeyboard(&world->gameObjects[i]);
     }
     
-    qsort(world->gameObjects, world->header.length, sizeof(GameObject), selectChildCircle);
+    binarySort(world, CHILD_CIRCLE);
     for(int i = 0; i < world->header.length && world->gameObjects[i].tag == CHILD_CIRCLE; i++) {
         gameObjectUpdateCircular(&world->gameObjects[i]);
     }
 
-    qsort(world->gameObjects, world->header.length, sizeof(GameObject), selectChilds);
+    binarySort(world, CHILD);
     for(int i = 0; i < world->header.length && world->gameObjects[i].tag == CHILD; i++) {
         gameObjectUpdate(&world->gameObjects[i]);
     }
@@ -113,10 +108,10 @@ int main(void)
 
     Color colors[] = {RED, GREEN, PURPLE, BLACK, YELLOW};
 
-    for(int i=0; i < 10; i++){
-        for(int j=0; j < 10; j++){
+    for(int i=0; i < 100; i++){
+        for(int j=0; j < 100; j++){
             GameObjectDAGInsertGameObject(&world, gameObjectCreate());
-            int arrayPosition = i * 10 + j + 1;
+            int arrayPosition = i * 100 + j + 1;
             world->gameObjects[arrayPosition].tag = i != j ? CHILD : CHILD_CIRCLE;
             world->gameObjects[arrayPosition].position.x = j;
             world->gameObjects[arrayPosition].position.z = i;
@@ -124,29 +119,6 @@ int main(void)
             GameObjectDAGAddChild(world, 0, arrayPosition);
         }
     }
-
-    GameObjectDAGInsertGameObject(&world, gameObjectCreate());
-    world->gameObjects[1].tag = CHILD;
-    world->gameObjects[1].position.x = 1.f;
-    world->gameObjects[1].position.z = 1.f;
-    world->gameObjects[1].color = BLUE;
-    GameObjectDAGAddChild(world, 0, 1);
-
-    // GameObjectDAGInsertGameObject(&world, gameObjectCreate());
-    // world->gameObjects[2].tag = CHILD_CIRCLE;
-    // world->gameObjects[2].position.x = 2.f;
-    // world->gameObjects[2].position.z = 2.f;
-    // world->gameObjects[2].color = BLUE;
-    
-    // GameObjectDAGAddChild(world, 0, 2);
-    
-    // GameObjectDAGInsertGameObject(&world, gameObjectCreate());
-    // world->gameObjects[3].tag = CHILD;
-    // world->gameObjects[3].position.x = 3.f;
-    // world->gameObjects[3].position.z = 3.f;
-    // world->gameObjects[3].color = GREEN;
-    
-    // GameObjectDAGAddChild(world, 0, 3);
 
     camera.fovy = 45.0f;
     camera.target = (Vector3){.0f, .0f, .0f};
@@ -157,7 +129,8 @@ int main(void)
 #ifdef OS_WEB
     emscripten_set_main_loop(update_frame, 0, 1);
 #else
-    while (!WindowShouldClose())
+    int count = 1000;
+    while (!WindowShouldClose() && count--)
     {
         update_frame();
     }
