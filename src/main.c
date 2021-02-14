@@ -16,9 +16,6 @@ GameObjectDAG* world;
 static void gameObjectDAGUpdateWorldPosition(GameObjectDAG* dag);
 static void update_frame();
 
-// -1: a < b
-//  1: a > b
-//  0: a == b
 static inline int selectParent(GameObject* a, GameObject* b){
     if(a->tag == b->tag) return 0;
     if(b->tag == PARENT) return 1; 
@@ -54,7 +51,13 @@ static inline void gameObjectDAGUpdateWorldPosition(GameObjectDAG* dag) {
 
 inline void update_frame()
 {
-    // iterate in parents
+    /**
+     * The idea behind this logic is, instead of calling objects methods, we have the array
+     * we sort and process, sort and process. The sorting put all the objects we want to 
+     * process in the begining of the array, so we iterate the array as long as
+     * the object tag is the one we want to work with. The last phase is restore the 
+     * array to it's original order(by id)
+     */
     qsort(world->gameObjects, world->header.length, sizeof(GameObject), selectParent);
     for(int i = 0; i < world->header.length && world->gameObjects[i].tag == PARENT; i++) {
         gameObjectUpdateKeyboard(&world->gameObjects[i]);
