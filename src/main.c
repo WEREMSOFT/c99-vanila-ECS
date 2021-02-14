@@ -12,10 +12,14 @@
 
 Camera3D camera = {0};
 GameObjectDAG* world;
+/**
+ * maxObjects is the number of objects that we think is in the array. If we have 1 object(like in parent)
+ * the sort will stop once it fount it
+ */ 
 
-static inline void binarySort(GameObjectDAG* world, Tag tag) {
+static inline void binarySort(GameObjectDAG* world, Tag tag, int maxObjects) {
     int currentPlace = 0;
-    for(int i = 0; i < world->header.length; i++) {
+    for(int i = 0; i < world->header.length && currentPlace < maxObjects; i++) {
         if(world->gameObjects[i].tag == tag) {
             GameObject pivot = world->gameObjects[currentPlace];
             world->gameObjects[currentPlace] = world->gameObjects[i];
@@ -53,17 +57,17 @@ inline void update_frame()
      * array to it's original order(by id)
      */
     
-    binarySort(world, PARENT);
+    binarySort(world, PARENT, 1);
     for(int i = 0; i < world->header.length && world->gameObjects[i].tag == PARENT; i++) {
         gameObjectUpdateKeyboard(&world->gameObjects[i]);
     }
     
-    binarySort(world, CHILD_CIRCLE);
+    binarySort(world, CHILD_CIRCLE, INT_MAX);
     for(int i = 0; i < world->header.length && world->gameObjects[i].tag == CHILD_CIRCLE; i++) {
         gameObjectUpdateCircular(&world->gameObjects[i]);
     }
 
-    binarySort(world, CHILD);
+    binarySort(world, CHILD, INT_MAX);
     for(int i = 0; i < world->header.length && world->gameObjects[i].tag == CHILD; i++) {
         gameObjectUpdate(&world->gameObjects[i]);
     }
@@ -129,6 +133,8 @@ int main(void)
 #ifdef OS_WEB
     emscripten_set_main_loop(update_frame, 0, 1);
 #else
+// we iterate only 1000 frames, to measure cache misses with valgrind 
+// valgrind --tool=cachegrind ./bin/main.bin 10000000
     int count = 1000;
     while (!WindowShouldClose() && count--)
     {
