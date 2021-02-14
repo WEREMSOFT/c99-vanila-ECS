@@ -6,8 +6,15 @@
 #include "util/array_header.h"
 #include <raylib.h>
 #include <raymath.h>
+#include <limits.h>
 
 struct GameObject;
+
+typedef enum Tag {
+    PARENT,
+    CHILD,
+    CHILD_CIRCLE,
+} Tag;
 
 typedef enum Primitive {
     CUBE,
@@ -15,13 +22,18 @@ typedef enum Primitive {
 } Primitive;
 
 typedef struct GameObject {
-    int parent;
     void(*update)(struct GameObject*);
     void(*draw)(struct GameObject*);
+    int id;
+    Tag tag;
+    int parent;
     Vector3 worldPosition;
     Vector3 position;
+    Color color;
     Primitive type;
 } GameObject;
+
+
 
 typedef struct GameObjectDAG {
     ArrayHeader header;
@@ -39,20 +51,24 @@ void gameObjectUpdateKeyboard(GameObject* self){
         self->position.z += 1.0f;
 }
 
+void gameObjectUpdateCircular(GameObject* self){
+    self->position.x = sinf(GetTime() * 2.f) + 2.f;
+    // self->position.z = cosf(GetTime() * 2.f) + 2.f;
+}
+
 void gameObjectUpdate(GameObject* self){
 }
 
 void gameObjectDraw(GameObject* self){
-    DrawCube(self->worldPosition, 1, 1, 1, RED);
-    DrawCubeWires(self->worldPosition, 1, 1, 1, BLUE);
+    DrawCube(self->worldPosition, 1, 1, 1, self->color);
 }
-
 
 GameObject gameObjectCreate(){
     GameObject self = {0};
-    self.parent = -1;
     self.update = gameObjectUpdate;
     self.draw = gameObjectDraw;
+    self.parent = -1;
+    self.color = RED;
     return self;
 }
 
@@ -68,24 +84,33 @@ GameObjectDAG* GameObjectDAGInit(int initialCapacity){
 
     memset(dag, 0, size);
 
+    for(int i = 0; i < initialCapacity; i++){
+        dag->gameObjects[i].id = INT_MAX;
+    }
+
     dag->header.capacity = initialCapacity;
     dag->header.elementSize = sizeof(GameObject);
     dag->header.length = 0;
     return dag;
 }
 
-void GameObjectDAGInsertGameObject(GameObjectDAG* self, GameObject element){
-    if(self->header.length + 1 == self->header.capacity){
-        self = realloc(self, self->header.capacity * self->header.elementSize * 2 + sizeof(ArrayHeader));
-        if(self == NULL) {
+void GameObjectDAGInsertGameObject(GameObjectDAG** self, GameObject element){
+    if((*self)->header.length + 1 == (*self)->header.capacity){
+        *self = realloc(*self, (*self)->header.capacity * (*self)->header.elementSize * 2 + sizeof(ArrayHeader));
+        if(*self == NULL) {
             printf("Error reallocating GameObjectDAG\n");
             exit(-1);
         } else {
-            self->header.capacity *= 2;
+            (*self)->header.capacity *= 2;
+
+            for(int i = (*self)->header.capacity / 2; i < (*self)->header.capacity; i++) {
+                (*self)->gameObjects[i].id = INT_MAX;
+            }
         }
     }
-    if(self->header.length == 0) element.parent = -1;
-    self->gameObjects[self->header.length++] = element;
+    if((*self)->header.length == 0) element.parent = -1;
+    element.id = (*self)->header.length;
+    (*self)->gameObjects[(*self)->header.length++] = element;
 }
 
 int GameObjectDAGAddChild(GameObjectDAG* self, uint64_t parent, uint64_t child){

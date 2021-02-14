@@ -63,17 +63,25 @@ int main(void)
     InitWindow(WIDTH, HEIGHT, "this is a DAG test");
     SetTargetFPS(60);
 
-    world = GameObjectDAGInit(10);
+        world = GameObjectDAGInit(10);
 
-    GameObjectDAGInsertGameObject(world, gameObjectCreate());
-    GameObjectDAGInsertGameObject(world, gameObjectCreate());
-
+    GameObjectDAGInsertGameObject(&world, gameObjectCreate());
+    world->gameObjects[0].tag = PARENT;
     world->gameObjects[0].update = gameObjectUpdateKeyboard;
 
-    world->gameObjects[1].position.x = 1.f;
-    world->gameObjects[1].position.z = 1.f;
-    
-    GameObjectDAGAddChild(world, 0, 1);
+    Color colors[] = {RED, GREEN, PURPLE, BLACK, YELLOW};
+
+    for(int i=0; i < 100; i++){
+        for(int j=0; j < 100; j++){
+            GameObjectDAGInsertGameObject(&world, gameObjectCreate());
+            int arrayPosition = i * 100 + j + 1;
+            world->gameObjects[arrayPosition].tag = i != j ? CHILD : CHILD_CIRCLE;
+            world->gameObjects[arrayPosition].position.x = j;
+            world->gameObjects[arrayPosition].position.z = i;
+            world->gameObjects[arrayPosition].color = colors[(i * j) % 5];
+            GameObjectDAGAddChild(world, 0, arrayPosition);
+        }
+    }
 
     camera.fovy = 45.0f;
     camera.target = (Vector3){.0f, .0f, .0f};
@@ -84,7 +92,8 @@ int main(void)
 #ifdef OS_WEB
     emscripten_set_main_loop(update_frame, 0, 1);
 #else
-    while (!WindowShouldClose())
+    int count = 1000;
+    while (!WindowShouldClose() && count--)
     {
         update_frame();
     }
