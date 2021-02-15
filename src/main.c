@@ -9,9 +9,12 @@
 
 #define WIDTH 800
 #define HEIGHT 600
-
+#define ARRAY_SIZE 100
 Camera3D camera = {0};
 GameObjectDAG* world;
+
+int count = 1000;
+
 /**
  * maxObjects is the number of objects that we think is in the array. If we have 1 object(like in parent)
  * the sort will stop once it fount it
@@ -81,11 +84,17 @@ inline void update_frame()
         ClearBackground(WHITE);
         DrawFPS(10, 10);
 
+        {
+            char text[100] = {0};
+            snprintf(text, 100, "Remaining cyclkes %d", count);
+            DrawText(text, 100, 10, 20, RED);
+        }
+
         BeginMode3D(camera);
         {
-            for(int i = 0; i < world->header.length; i++){
-                gameObjectDraw(&world->gameObjects[i]);
-            }
+            // for(int i = 0; i < world->header.length; i++){
+            //     gameObjectDraw(&world->gameObjects[i]);
+            // }
             DrawGrid(10, 1);
         }
         EndMode3D();
@@ -103,7 +112,7 @@ int main(void)
 {
 
     InitWindow(WIDTH, HEIGHT, "this is a DAG test");
-    SetTargetFPS(60);
+    SetTargetFPS(10);
 
     world = GameObjectDAGInit(10);
 
@@ -112,10 +121,10 @@ int main(void)
 
     Color colors[] = {RED, GREEN, PURPLE, BLACK, YELLOW};
 
-    for(int i=0; i < 100; i++){
-        for(int j=0; j < 100; j++){
+    for(int i=0; i < ARRAY_SIZE; i++){
+        for(int j=0; j < ARRAY_SIZE; j++){
             GameObjectDAGInsertGameObject(&world, gameObjectCreate());
-            int arrayPosition = i * 100 + j + 1;
+            int arrayPosition = i * ARRAY_SIZE + j + 1;
             world->gameObjects[arrayPosition].tag = i != j ? CHILD : CHILD_CIRCLE;
             world->gameObjects[arrayPosition].position.x = j;
             world->gameObjects[arrayPosition].position.z = i;
@@ -135,7 +144,6 @@ int main(void)
 #else
 // we iterate only 1000 frames, to measure cache misses with valgrind 
 // valgrind --tool=cachegrind ./bin/main.bin 10000000
-    int count = 1000;
     while (!WindowShouldClose() && count--)
     {
         update_frame();

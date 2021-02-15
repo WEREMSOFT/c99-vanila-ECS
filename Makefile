@@ -30,14 +30,14 @@ OBJ_FILES := $(patsubst $(SRC_D)%.c,$(OBJ_D)%.o,$(SRC_FILES))
 
 INCLUDE_D := -I$(LIBS_D)include/
 STATIC_LIBS_D := -L$(LIBS_D)static/
-CFLAGS := -O3 -Wpedantic -g -Wall -std=c99 -DOS_$(DETTECTED_OS) 
+CFLAGS := -O2 -Wpedantic -g -Wall -std=c99 -g3 -DOS_$(DETTECTED_OS) 
 DEBUGGER := kdbg # Other options: cgdb gdb
 MK_DIR:= mkdir -p
 BIN_EXTENSION = bin
 
 # Vars for emscripten build
 RAYLIB_PATH := /Users/pabloweremczuk/Documents/Proyectos/c/raylib
-EMSC_CFLAGS := -O0 -s -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=0 -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 -v -DOS_WEB
+EMSC_CFLAGS := -O2 -s -Wall -std=c99 -D_DEFAULT_SOURCE -Wno-missing-braces -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=0 -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 -v -D OS_WEB
 EMSC_CC := emcc
 EMSC_STATIC_LIBS_D := $(LIBS_D)static/libraylib.bc
 # EMSC_STATIC_LIBS_D := $(LIBS_D)static/libraylib.bc
@@ -115,6 +115,9 @@ clean:
 	rm -rf $(ASM_D)*
 	rm -rf $(SRC_D)*.o
 
+run_cache_grind: clean main
+	valgrind --tool=cachegrind ./bin/main.bin 10000000
+
 run_perf_%.$(BIN_EXTENSION): $(BLD_D)%.$(BIN_EXTENSION)
 	perf stat -e task-clock,cycles,instructions,cache-references,cache-misses $^
 	
@@ -128,4 +131,4 @@ test_%: $(TEST_BLD_D)%.spec.$(BIN_EXTENSION)
 	$^
 
 $(ASM_D)%.S: $(SRC_D)%.c
-	$(CC_COMMAND) -o $@ $(CFLAGS) -S $^ $(LINK_LIBS)  
+	$(CC_COMMAND) -o $@ $(CFLAGS) -S $^ $(LINK_LIBS)
