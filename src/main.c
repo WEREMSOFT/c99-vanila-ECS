@@ -14,11 +14,11 @@ GameObjectDAG* world;
 
 inline void gameObjectDAGUpdateWorldPosition(GameObjectDAG* dag) {
     for (int i = 0; i < dag->header.length; i++){
-        GameObject* go = &world->gameObjects[i];
+        GameObject* go = world->gameObjects[i];
         if(go->parent == -1){
             go->worldPosition = go->position;
         } else {
-            go->worldPosition = Vector3Add(go->position, dag->gameObjects[go->parent].worldPosition);
+            go->worldPosition = Vector3Add(go->position, dag->gameObjects[go->parent]->worldPosition);
         }
     }
 }
@@ -36,7 +36,7 @@ void update_frame()
         BeginMode3D(camera);
         {
             for(int i = 0; i < world->header.length; i++){
-                GameObject* go = &world->gameObjects[i];
+                GameObject* go = world->gameObjects[i];
                 go->draw(go);
             }
             DrawGrid(10, 1);
@@ -44,7 +44,7 @@ void update_frame()
         EndMode3D();
 
         for(int i = 0; i < world->header.length; i++) {
-            world->gameObjects[i].update(&world->gameObjects[i]);
+            world->gameObjects[i]->update(world->gameObjects[i]);
         }
 
         
@@ -66,19 +66,19 @@ int main(void)
         world = GameObjectDAGInit(10);
 
     GameObjectDAGInsertGameObject(&world, gameObjectCreate());
-    world->gameObjects[0].tag = PARENT;
-    world->gameObjects[0].update = gameObjectUpdateKeyboard;
+    world->gameObjects[0]->tag = PARENT;
+    world->gameObjects[0]->update = gameObjectUpdateKeyboard;
 
     Color colors[] = {RED, GREEN, PURPLE, BLACK, YELLOW};
 
-    for(int i=0; i < 100; i++){
-        for(int j=0; j < 100; j++){
+    for(int i=0; i < 10; i++){
+        for(int j=0; j < 10; j++){
             GameObjectDAGInsertGameObject(&world, gameObjectCreate());
-            int arrayPosition = i * 100 + j + 1;
-            world->gameObjects[arrayPosition].tag = i != j ? CHILD : CHILD_CIRCLE;
-            world->gameObjects[arrayPosition].position.x = j;
-            world->gameObjects[arrayPosition].position.z = i;
-            world->gameObjects[arrayPosition].color = colors[(i * j) % 5];
+            int arrayPosition = i * 10 + j + 1;
+            world->gameObjects[arrayPosition]->tag = CHILD;
+            world->gameObjects[arrayPosition]->position.x = j;
+            world->gameObjects[arrayPosition]->position.z = i;
+            world->gameObjects[arrayPosition]->color = colors[(i * j) % 5];
             GameObjectDAGAddChild(world, 0, arrayPosition);
         }
     }

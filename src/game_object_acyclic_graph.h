@@ -37,7 +37,7 @@ typedef struct GameObject {
 
 typedef struct GameObjectDAG {
     ArrayHeader header;
-    GameObject gameObjects[1];
+    GameObject* gameObjects[];
 } GameObjectDAG;
 
 void gameObjectUpdateKeyboard(GameObject* self){
@@ -53,7 +53,6 @@ void gameObjectUpdateKeyboard(GameObject* self){
 
 void gameObjectUpdateCircular(GameObject* self){
     self->position.x = sinf(GetTime() * 2.f) + 2.f;
-    // self->position.z = cosf(GetTime() * 2.f) + 2.f;
 }
 
 void gameObjectUpdate(GameObject* self){
@@ -63,18 +62,18 @@ void gameObjectDraw(GameObject* self){
     DrawCube(self->worldPosition, 1, 1, 1, self->color);
 }
 
-GameObject gameObjectCreate(){
-    GameObject self = {0};
-    self.update = gameObjectUpdate;
-    self.draw = gameObjectDraw;
-    self.parent = -1;
-    self.color = RED;
+GameObject* gameObjectCreate(){
+    GameObject* self = (GameObject*)malloc(sizeof(GameObject));
+    self->update = gameObjectUpdate;
+    self->draw = gameObjectDraw;
+    self->parent = -1;
+    self->color = RED;
     return self;
 }
 
 // recomended initial capacity 10
 GameObjectDAG* GameObjectDAGInit(int initialCapacity){
-    size_t size = sizeof(GameObject) * initialCapacity + sizeof(ArrayHeader);
+    size_t size = sizeof(GameObject*) * initialCapacity + sizeof(ArrayHeader);
     GameObjectDAG* dag = (GameObjectDAG*)malloc(size);
     
     if(!dag){
@@ -85,16 +84,16 @@ GameObjectDAG* GameObjectDAGInit(int initialCapacity){
     memset(dag, 0, size);
 
     for(int i = 0; i < initialCapacity; i++){
-        dag->gameObjects[i].id = INT_MAX;
+        dag->gameObjects[i] = NULL;
     }
 
     dag->header.capacity = initialCapacity;
-    dag->header.elementSize = sizeof(GameObject);
+    dag->header.elementSize = sizeof(GameObject*);
     dag->header.length = 0;
     return dag;
 }
 
-void GameObjectDAGInsertGameObject(GameObjectDAG** self, GameObject element){
+void GameObjectDAGInsertGameObject(GameObjectDAG** self, GameObject* element){
     if((*self)->header.length + 1 == (*self)->header.capacity){
         *self = realloc(*self, (*self)->header.capacity * (*self)->header.elementSize * 2 + sizeof(ArrayHeader));
         if(*self == NULL) {
@@ -102,20 +101,16 @@ void GameObjectDAGInsertGameObject(GameObjectDAG** self, GameObject element){
             exit(-1);
         } else {
             (*self)->header.capacity *= 2;
-
-            for(int i = (*self)->header.capacity / 2; i < (*self)->header.capacity; i++) {
-                (*self)->gameObjects[i].id = INT_MAX;
-            }
         }
     }
-    if((*self)->header.length == 0) element.parent = -1;
-    element.id = (*self)->header.length;
+    if((*self)->header.length == 0) element->parent = -1;
+    element->id = (*self)->header.length;
     (*self)->gameObjects[(*self)->header.length++] = element;
 }
 
 int GameObjectDAGAddChild(GameObjectDAG* self, uint64_t parent, uint64_t child){
     if(parent <= child){
-        self->gameObjects[child].parent = parent;
+        self->gameObjects[child]->parent = parent;
         return 0;
     } else {
         return -1;
@@ -126,13 +121,13 @@ void GameObjectDAGFini(GameObjectDAG* self) {
     free(self);
 }
 
-static void gameObjectPrint(GameObject gameObjects[], int gameObjectCount, int gameObject, int indent) {
+static void gameObjectPrint(GameObject* gameObjects[], int gameObjectCount, int gameObject, int indent) {
     if(gameObject >= gameObjectCount) return;
 
     for(int i = 0; i < indent; i++) printf("\t");
     
     for(int i = gameObject + 1; i < gameObjectCount; i++) {
-        if(gameObjects[i].parent == gameObject) gameObjectPrint(gameObjects, gameObjectCount, i, indent + 1);
+        if(gameObjects[i]->parent == gameObject) gameObjectPrint(gameObjects, gameObjectCount, i, indent + 1);
     }
 }
 
