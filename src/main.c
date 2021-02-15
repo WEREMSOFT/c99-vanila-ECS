@@ -8,7 +8,7 @@
 
 #define WIDTH 800
 #define HEIGHT 600
-
+#define ARRAY_SIZE 100
 Camera3D camera = {0};
 GameObjectDAG* world;
 
@@ -29,7 +29,6 @@ void update_frame()
 
     BeginDrawing();
     {
-
         ClearBackground(WHITE);
         DrawFPS(10, 10);
 
@@ -46,8 +45,6 @@ void update_frame()
         for(int i = 0; i < world->header.length; i++) {
             world->gameObjects[i]->update(world->gameObjects[i]);
         }
-
-        
     }
     EndDrawing();
 
@@ -71,10 +68,10 @@ int main(void)
 
     Color colors[] = {RED, GREEN, PURPLE, BLACK, YELLOW};
 
-    for(int i=0; i < 10; i++){
-        for(int j=0; j < 10; j++){
+    for(int i=0; i < ARRAY_SIZE; i++){
+        for(int j=0; j < ARRAY_SIZE; j++){
             GameObjectDAGInsertGameObject(&world, gameObjectCreate());
-            int arrayPosition = i * 10 + j + 1;
+            int arrayPosition = i * ARRAY_SIZE + j + 1;
             world->gameObjects[arrayPosition]->tag = CHILD;
             world->gameObjects[arrayPosition]->position.x = j;
             world->gameObjects[arrayPosition]->position.z = i;
