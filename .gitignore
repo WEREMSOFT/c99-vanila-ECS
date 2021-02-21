@@ -2,3 +2,5 @@
 *.bin
 .cccc
 cachegrind.*
+.vscode
+
